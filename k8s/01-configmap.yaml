@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: businessconnect-config
+  namespace: businessconnect
+data:
+  # Database
+  DB_HOST: "postgres"
+  DB_PORT: "5432"
+  DB_NAME: "church_platform"
+  DB_USER: "postgres"
+
+  # Redis
+  REDIS_HOST: "redis"
+  REDIS_PORT: "6379"
+
+  # Service URLs (Kubernetes DNS: <service-name>.<namespace>.svc.cluster.local)
+  AUTH_SERVICE_URL:     "http://auth-service:4001"
+  BUSINESS_SERVICE_URL: "http://business-service:4002"
+  REVIEW_SERVICE_URL:   "http://review-service:4003"
+  INQUIRY_SERVICE_URL:  "http://inquiry-service:4004"
+  GATEWAY_URL:          "http://gateway-service:4000"
+
+  # Ports
+  AUTH_PORT:     "4001"
+  BUSINESS_PORT: "4002"
+  REVIEW_PORT:   "4003"
+  INQUIRY_PORT:  "4004"
+  GATEWAY_PORT:  "4000"
+  FRONTEND_PORT: "3000"

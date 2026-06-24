@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: inquiry-service
+  namespace: businessconnect
+  labels:
+    app: inquiry-service
+spec:
+  type: ClusterIP
+  selector:
+    app: inquiry-service
+  ports:
+    - port: 4004
+      targetPort: 4004
+      protocol: TCP

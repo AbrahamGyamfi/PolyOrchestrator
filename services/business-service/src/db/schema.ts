@@ -81,6 +81,23 @@ export const event = pgTable('event', {
   updatedAt: timestamp('updatedAt').notNull().defaultNow(),
 })
 
+export const serviceProvider = pgTable('service_provider', {
+  id: serial('id').primaryKey(),
+  userId: text('userId').notNull(),
+  name: text('name').notNull(),
+  category: text('category').notNull(),
+  description: text('description').notNull(),
+  rate: text('rate'),
+  location: text('location'),
+  phone: text('phone'),
+  email: text('email'),
+  availability: text('availability'),
+  image: text('image'),
+  isActive: boolean('isActive').notNull().default(true),
+  createdAt: timestamp('createdAt').notNull().defaultNow(),
+  updatedAt: timestamp('updatedAt').notNull().defaultNow(),
+})
+
 export const booking = pgTable('booking', {
   id: serial('id').primaryKey(),
   businessId: integer('businessId').notNull(),

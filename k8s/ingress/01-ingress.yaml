@@ -1,0 +1,38 @@
+# AWS Load Balancer Controller must be installed in the cluster.
+# Install: https://docs.aws.amazon.com/eks/latest/userguide/aws-load-balancer-controller.html
+#
+# Quick install (replace <ACCOUNT_ID> and <REGION>):
+#   eksctl utils associate-iam-oidc-provider --cluster businessconnect-eks --approve
+#   helm repo add eks https://aws.github.io/eks-charts
+#   helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
+#     -n kube-system \
+#     --set clusterName=businessconnect-eks \
+#     --set serviceAccount.create=true
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: businessconnect-ingress
+  namespace: businessconnect
+  annotations:
+    kubernetes.io/ingress.class:                    "alb"
+    alb.ingress.kubernetes.io/scheme:               "internet-facing"
+    alb.ingress.kubernetes.io/target-type:          "ip"
+    alb.ingress.kubernetes.io/listen-ports:         '[{"HTTP": 80}]'
+    alb.ingress.kubernetes.io/healthcheck-path:     "/"
+    alb.ingress.kubernetes.io/healthcheck-protocol: "HTTP"
+    # Uncomment to enable HTTPS:
+    # alb.ingress.kubernetes.io/listen-ports: '[{"HTTP":80},{"HTTPS":443}]'
+    # alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:<REGION>:<ACCOUNT_ID>:certificate/<CERT_ID>
+spec:
+  rules:
+    - http:
+        paths:
+          # All traffic goes to the frontend; Nginx proxies /api/* to gateway internally
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend-service
+                port:
+                  number: 3000

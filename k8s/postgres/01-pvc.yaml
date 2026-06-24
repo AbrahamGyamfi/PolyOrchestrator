@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-pvc
+  namespace: businessconnect
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: gp2      # EKS default; use gp3 StorageClass for better perf
+  resources:
+    requests:
+      storage: 10Gi

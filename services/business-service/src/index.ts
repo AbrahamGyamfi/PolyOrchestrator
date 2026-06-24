@@ -9,6 +9,7 @@ import membersRouter from './routes/members'
 import adminRouter from './routes/admin'
 import uploadRouter from './routes/upload'
 import statsRouter from './routes/stats'
+import servicesRouter from './routes/services'
 
 const app = express()
 const PORT = process.env.PORT ?? 4002
@@ -26,5 +27,6 @@ app.use('/api/bookings', bookingsRouter)
 app.use('/api/members', membersRouter)
 app.use('/api/admin', adminRouter)
 app.use('/api/stats', statsRouter)
+app.use('/api/services', servicesRouter)
 
 app.listen(PORT, () => console.log(`business-service running on port ${PORT}`))

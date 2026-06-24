@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: business-service
+  namespace: businessconnect
+  labels:
+    app: business-service
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: business-service
+  template:
+    metadata:
+      labels:
+        app: business-service
+    spec:
+      containers:
+        - name: business-service
+          image: <ACCOUNT_ID>.dkr.ecr.<REGION>.amazonaws.com/businessconnect/business-service:latest
+          ports:
+            - containerPort: 4002
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: businessconnect-secrets
+                  key: DATABASE_URL
+            - name: AUTH_SERVICE_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: businessconnect-config
+                  key: AUTH_SERVICE_URL
+            - name: UPLOADS_DIR
+              value: "/uploads"
+            - name: PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: businessconnect-config
+                  key: BUSINESS_PORT
+          resources:
+            requests:
+              cpu:    "200m"
+              memory: "256Mi"
+            limits:
+              cpu:    "500m"
+              memory: "1Gi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 4002
+            initialDelaySeconds: 20
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 4002
+            initialDelaySeconds: 10
+            periodSeconds: 10
