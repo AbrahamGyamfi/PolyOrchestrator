@@ -2,3 +2,7 @@ node_modules
 dist
 .env
 *.log
+coverage
+__tests__
+*.test.ts
+*.spec.ts

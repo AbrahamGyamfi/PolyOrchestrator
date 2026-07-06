@@ -29,7 +29,7 @@ resource "aws_ecs_cluster_capacity_providers" "main" {
 
 locals {
   log_services = ["postgres", "redis", "auth-service", "business-service",
-                  "review-service", "inquiry-service", "gateway", "frontend"]
+                  "review-service", "inquiry-service", "gateway", "frontend", "migrate"]
 }
 
 resource "aws_cloudwatch_log_group" "services" {
@@ -431,6 +431,35 @@ resource "aws_ecs_task_definition" "frontend" {
 #  ECS Services
 # ════════════════════════════════════════════════════════════════════════════
 
+# ── Migrate (one-shot task definition — run manually with aws ecs run-task) ───
+
+resource "aws_ecs_task_definition" "migrate" {
+  family                   = "${var.project}-migrate"
+  requires_compatibilities = ["FARGATE"]
+  network_mode             = "awsvpc"
+  cpu                      = "256"
+  memory                   = "512"
+  execution_role_arn       = aws_iam_role.ecs_execution.arn
+  task_role_arn            = aws_iam_role.ecs_task.arn
+
+  container_definitions = jsonencode([{
+    name      = "migrate"
+    image     = "${aws_ecr_repository.services["migrate"].repository_url}:latest"
+    essential = true
+    environment = [
+      { name = "DATABASE_URL", value = "postgres://postgres:${var.db_password}@postgres.${local.ns}:5432/church_platform" },
+    ]
+    logConfiguration = {
+      logDriver = "awslogs"
+      options   = {
+        "awslogs-group"         = "/ecs/${var.project}/migrate"
+        "awslogs-region"        = var.aws_region
+        "awslogs-stream-prefix" = "ecs"
+      }
+    }
+  }])
+}
+
 # ── PostgreSQL service ────────────────────────────────────────────────────────
 
 resource "aws_ecs_service" "postgres" {
@@ -441,8 +470,9 @@ resource "aws_ecs_service" "postgres" {
   launch_type     = "FARGATE"
 
   network_configuration {
-    subnets         = aws_subnet.private[*].id
-    security_groups = [aws_security_group.postgres.id]
+    subnets          = aws_subnet.public[*].id
+    security_groups  = [aws_security_group.postgres.id]
+    assign_public_ip = true
   }
 
   service_registries {
@@ -462,8 +492,9 @@ resource "aws_ecs_service" "redis" {
   launch_type     = "FARGATE"
 
   network_configuration {
-    subnets         = aws_subnet.private[*].id
-    security_groups = [aws_security_group.redis.id]
+    subnets          = aws_subnet.public[*].id
+    security_groups  = [aws_security_group.redis.id]
+    assign_public_ip = true
   }
 
   service_registries {
@@ -483,8 +514,9 @@ resource "aws_ecs_service" "auth_service" {
   launch_type     = "FARGATE"
 
   network_configuration {
-    subnets         = aws_subnet.private[*].id
-    security_groups = [aws_security_group.auth_service.id]
+    subnets          = aws_subnet.public[*].id
+    security_groups  = [aws_security_group.auth_service.id]
+    assign_public_ip = true
   }
 
   service_registries {
@@ -505,8 +537,9 @@ resource "aws_ecs_service" "business_service" {
   launch_type     = "FARGATE"
 
   network_configuration {
-    subnets         = aws_subnet.private[*].id
-    security_groups = [aws_security_group.backend_services.id]
+    subnets          = aws_subnet.public[*].id
+    security_groups  = [aws_security_group.backend_services.id]
+    assign_public_ip = true
   }
 
   service_registries {
@@ -527,8 +560,9 @@ resource "aws_ecs_service" "review_service" {
   launch_type     = "FARGATE"
 
   network_configuration {
-    subnets         = aws_subnet.private[*].id
-    security_groups = [aws_security_group.backend_services.id]
+    subnets          = aws_subnet.public[*].id
+    security_groups  = [aws_security_group.backend_services.id]
+    assign_public_ip = true
   }
 
   service_registries {
@@ -549,8 +583,9 @@ resource "aws_ecs_service" "inquiry_service" {
   launch_type     = "FARGATE"
 
   network_configuration {
-    subnets         = aws_subnet.private[*].id
-    security_groups = [aws_security_group.backend_services.id]
+    subnets          = aws_subnet.public[*].id
+    security_groups  = [aws_security_group.backend_services.id]
+    assign_public_ip = true
   }
 
   service_registries {
@@ -571,8 +606,9 @@ resource "aws_ecs_service" "gateway" {
   launch_type     = "FARGATE"
 
   network_configuration {
-    subnets         = aws_subnet.private[*].id
-    security_groups = [aws_security_group.gateway.id]
+    subnets          = aws_subnet.public[*].id
+    security_groups  = [aws_security_group.gateway.id]
+    assign_public_ip = true
   }
 
   service_registries {
@@ -598,8 +634,9 @@ resource "aws_ecs_service" "frontend" {
   launch_type     = "FARGATE"
 
   network_configuration {
-    subnets         = aws_subnet.private[*].id
-    security_groups = [aws_security_group.frontend.id]
+    subnets          = aws_subnet.public[*].id
+    security_groups  = [aws_security_group.frontend.id]
+    assign_public_ip = true
   }
 
   load_balancer {

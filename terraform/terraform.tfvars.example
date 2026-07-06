@@ -1,18 +1,33 @@
-# Copy this file to terraform.tfvars and fill in real values.
-# Never commit terraform.tfvars to version control.
+# ─────────────────────────────────────────────────────────────────────────────
+# terraform.tfvars.example  —  Copy to terraform.tfvars and fill in real values
+# NEVER commit terraform.tfvars to version control (it's in .gitignore)
+# ─────────────────────────────────────────────────────────────────────────────
 
-aws_region  = "us-east-1"
+# AWS Configuration
+aws_region  = "eu-west-1"
 project     = "businessconnect"
 environment = "dev"
 
-better_auth_secret = "CHANGE_ME_TO_A_LONG_RANDOM_SECRET_AT_LEAST_32_CHARS"
-db_password        = "CHANGE_ME_STRONG_DB_PASSWORD"
-frontend_url       = "http://localhost:3000"   # replace with ALB DNS after first apply
+# ── Secrets (generate strong random values) ──────────────────────────────────
+# Generate: openssl rand -base64 32
+better_auth_secret = "REPLACE_WITH_openssl_rand_-base64_32_output"
 
-ecs_service_desired_count = 2
+# Use a strong password (min 16 chars, mixed case + symbols)
+db_password = "REPLACE_WITH_strong_password"
 
+# The public URL of your frontend (used for CORS and auth redirects)
+frontend_url = "http://localhost:3000"
+
+# ── ECS Scaling ───────────────────────────────────────────────────────────────
+ecs_service_desired_count = 1   # Set to 2+ for high availability
+ecs_min_capacity          = 1   # Auto-scaling minimum (per service)
+ecs_max_capacity          = 4   # Auto-scaling maximum (per service)
+ecs_cpu_target            = 70  # Scale out when CPU exceeds this %
+
+# ── EKS ───────────────────────────────────────────────────────────────────────
 eks_version            = "1.31"
-eks_node_instance_type = "t3.medium"
-eks_node_min           = 2
-eks_node_max           = 4
-eks_node_desired       = 2
+eks_node_instance_type = "t3.medium"   # 2 vCPU, 4 GB RAM
+eks_node_min           = 1
+eks_node_max           = 3
+eks_node_desired       = 1
+eks_enable_spot        = false         # Set true to save ~60% on compute costs

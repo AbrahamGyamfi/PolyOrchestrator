@@ -27,6 +27,7 @@ aws ecr get-login-password --region "${REGION}" \
 # Map: local build context → ECR repository name
 declare -A SERVICES=(
   ["${ROOT}/frontend"]="${PROJECT}/frontend"
+  ["${ROOT}/migrate"]="${PROJECT}/migrate"
   ["${ROOT}/services/auth-service"]="${PROJECT}/auth-service"
   ["${ROOT}/services/business-service"]="${PROJECT}/business-service"
   ["${ROOT}/services/review-service"]="${PROJECT}/review-service"

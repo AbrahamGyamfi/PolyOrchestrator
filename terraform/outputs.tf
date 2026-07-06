@@ -34,22 +34,5 @@ output "cloud_map_namespace" {
   value       = aws_service_discovery_private_dns_namespace.main.name
 }
 
-# ── EKS ───────────────────────────────────────────────────────────────────────
-
-output "eks_cluster_name" {
-  value = aws_eks_cluster.main.name
-}
-
-output "eks_cluster_endpoint" {
-  value = aws_eks_cluster.main.endpoint
-}
-
-output "eks_cluster_ca" {
-  value     = aws_eks_cluster.main.certificate_authority[0].data
-  sensitive = true
-}
-
-output "eks_kubeconfig_command" {
-  description = "Run this command to configure kubectl for the EKS cluster"
-  value       = "aws eks update-kubeconfig --region ${var.aws_region} --name ${aws_eks_cluster.main.name}"
-}
+# EKS outputs live in eks.tf so they are automatically enabled/disabled
+# alongside the EKS resources when that file is present or renamed.

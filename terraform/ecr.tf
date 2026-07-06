@@ -9,6 +9,7 @@ locals {
     "review-service",
     "inquiry-service",
     "gateway",
+    "migrate",
   ]
 }
 

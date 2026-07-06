@@ -93,3 +93,27 @@ variable "eks_node_desired" {
   type    = number
   default = 2
 }
+
+variable "ecs_min_capacity" {
+  description = "Minimum number of ECS tasks per service (auto-scaling lower bound)"
+  type        = number
+  default     = 1
+}
+
+variable "ecs_max_capacity" {
+  description = "Maximum number of ECS tasks per service (auto-scaling upper bound)"
+  type        = number
+  default     = 4
+}
+
+variable "ecs_cpu_target" {
+  description = "Target CPU utilization percentage for ECS auto-scaling"
+  type        = number
+  default     = 70
+}
+
+variable "eks_enable_spot" {
+  description = "Enable Spot instance node group for cost savings (~60-70% cheaper than On-Demand)"
+  type        = bool
+  default     = false
+}

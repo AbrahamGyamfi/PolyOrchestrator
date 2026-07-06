@@ -1,0 +1,91 @@
+name: Deploy to ECS
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'services/**'
+      - 'frontend/**'
+      - 'scripts/**'
+      - '.github/workflows/cd-ecs.yml'
+
+env:
+  AWS_REGION: eu-west-1
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.meta.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set image tag
+        id: meta
+        run: echo "tag=$(echo ${{ github.sha }} | cut -c1-7)" >> $GITHUB_OUTPUT
+
+      - name: Build and push all images
+        env:
+          REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.${{ env.AWS_REGION }}.amazonaws.com
+          TAG: ${{ steps.meta.outputs.tag }}
+        run: |
+          declare -A IMAGES=(
+            ["services/gateway"]="businessconnect/gateway"
+            ["services/auth-service"]="businessconnect/auth-service"
+            ["services/business-service"]="businessconnect/business-service"
+            ["services/review-service"]="businessconnect/review-service"
+            ["services/inquiry-service"]="businessconnect/inquiry-service"
+            ["frontend"]="businessconnect/frontend"
+            ["migrate"]="businessconnect/migrate"
+          )
+          for context in "${!IMAGES[@]}"; do
+            repo="${REGISTRY}/${IMAGES[$context]}"
+            docker build --platform linux/amd64 -t "${repo}:${TAG}" -t "${repo}:latest" "${context}"
+            docker push "${repo}:${TAG}"
+            docker push "${repo}:latest"
+          done
+
+  deploy-ecs:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Force new ECS deployments
+        run: |
+          SERVICES=(auth-service business-service review-service inquiry-service gateway frontend)
+          for svc in "${SERVICES[@]}"; do
+            echo "Deploying businessconnect-${svc}..."
+            aws ecs update-service \
+              --cluster businessconnect-ecs \
+              --service "businessconnect-${svc}" \
+              --force-new-deployment \
+              --no-cli-pager
+          done
+
+      - name: Wait for deployments to stabilize
+        run: |
+          SERVICES=(businessconnect-auth-service businessconnect-business-service \
+                    businessconnect-review-service businessconnect-inquiry-service \
+                    businessconnect-gateway businessconnect-frontend)
+          aws ecs wait services-stable \
+            --cluster businessconnect-ecs \
+            --services "${SERVICES[@]}"
+
+      - name: Deployment complete
+        run: echo "✅ ECS deployment complete at $(date -u)"
