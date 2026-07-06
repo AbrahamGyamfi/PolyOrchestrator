@@ -1,4 +1,4 @@
-FROM node:22.16-alpine3.22 AS builder
+FROM node:26.3-alpine3.22 AS builder
 WORKDIR /app
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 COPY package*.json ./
@@ -6,7 +6,7 @@ RUN npm ci
 COPY . .
 RUN npm run build && npm prune --omit=dev
 
-FROM node:22.16-alpine3.22 AS runner
+FROM node:26.3-alpine3.22 AS runner
 WORKDIR /app
 RUN apk add --no-cache dumb-init && addgroup -S appgroup && adduser -S appuser -G appgroup
 COPY --from=builder /app/node_modules ./node_modules
