@@ -1,8 +1,5 @@
-# One ECR repository per deployable image.
-# Postgres and Redis use public DockerHub images and don't need ECR repos.
-
 locals {
-  ecr_repos = [
+  repos = [
     "frontend",
     "auth-service",
     "business-service",
@@ -14,7 +11,7 @@ locals {
 }
 
 resource "aws_ecr_repository" "services" {
-  for_each = toset(local.ecr_repos)
+  for_each = toset(local.repos)
 
   name                 = "${var.project}/${each.key}"
   image_tag_mutability = "MUTABLE"
@@ -27,7 +24,6 @@ resource "aws_ecr_repository" "services" {
   tags = { Name = "${var.project}/${each.key}" }
 }
 
-# Lifecycle policy: keep only the 10 most recent images per repo
 resource "aws_ecr_lifecycle_policy" "services" {
   for_each   = aws_ecr_repository.services
   repository = each.value.name

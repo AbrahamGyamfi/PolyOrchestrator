@@ -1,9 +1,4 @@
-# ════════════════════════════════════════════════════════════════════════════
-#  ECS IAM Roles
-# ════════════════════════════════════════════════════════════════════════════
-
 # ── ECS Task Execution Role ───────────────────────────────────────────────────
-# Allows ECS to pull images from ECR and write logs to CloudWatch.
 
 resource "aws_iam_role" "ecs_execution" {
   name = "${var.project}-ecs-execution-role"
@@ -24,7 +19,6 @@ resource "aws_iam_role_policy_attachment" "ecs_execution" {
 }
 
 # ── ECS Task Role ─────────────────────────────────────────────────────────────
-# Permissions the running container needs (S3, SES, etc.) — extend as required.
 
 resource "aws_iam_role" "ecs_task" {
   name = "${var.project}-ecs-task-role"
@@ -38,10 +32,6 @@ resource "aws_iam_role" "ecs_task" {
     }]
   })
 }
-
-# ════════════════════════════════════════════════════════════════════════════
-#  EKS IAM Roles
-# ════════════════════════════════════════════════════════════════════════════
 
 # ── EKS Cluster Role ──────────────────────────────────────────────────────────
 

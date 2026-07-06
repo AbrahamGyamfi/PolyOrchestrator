@@ -1,4 +1,6 @@
-# ── VPC ───────────────────────────────────────────────────────────────────────
+data "aws_availability_zones" "available" {
+  state = "available"
+}
 
 resource "aws_vpc" "main" {
   cidr_block           = var.vpc_cidr
@@ -7,8 +9,6 @@ resource "aws_vpc" "main" {
 
   tags = { Name = "${var.project}-vpc" }
 }
-
-# ── Subnets ───────────────────────────────────────────────────────────────────
 
 resource "aws_subnet" "public" {
   count = 2
@@ -20,7 +20,7 @@ resource "aws_subnet" "public" {
 
   tags = {
     Name                     = "${var.project}-public-${count.index + 1}"
-    "kubernetes.io/role/elb" = "1"   # Required by AWS Load Balancer Controller
+    "kubernetes.io/role/elb" = "1"
   }
 }
 
@@ -33,21 +33,14 @@ resource "aws_subnet" "private" {
 
   tags = {
     Name                              = "${var.project}-private-${count.index + 1}"
-    "kubernetes.io/role/internal-elb" = "1"   # Required by AWS Load Balancer Controller
+    "kubernetes.io/role/internal-elb" = "1"
   }
 }
-
-# ── Internet Gateway ──────────────────────────────────────────────────────────
 
 resource "aws_internet_gateway" "main" {
   vpc_id = aws_vpc.main.id
   tags   = { Name = "${var.project}-igw" }
 }
-
-# NAT Gateway removed — ECS Fargate tasks run in public subnets with public IPs.
-# Add a NAT Gateway back here if EKS nodes (private subnets) need internet access.
-
-# ── Route Tables ──────────────────────────────────────────────────────────────
 
 resource "aws_route_table" "public" {
   vpc_id = aws_vpc.main.id
@@ -62,7 +55,6 @@ resource "aws_route_table" "public" {
 resource "aws_route_table" "private" {
   vpc_id = aws_vpc.main.id
   tags   = { Name = "${var.project}-rt-private" }
-  # No default route — add NAT Gateway route when EKS nodes need internet access
 }
 
 resource "aws_route_table_association" "public" {

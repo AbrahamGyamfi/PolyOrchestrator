@@ -1,9 +1,7 @@
-# ── ALB (internet-facing) ─────────────────────────────────────────────────────
-
 resource "aws_security_group" "alb" {
   name        = "${var.project}-sg-alb"
   description = "Allow HTTP/HTTPS from anywhere"
-  vpc_id      = aws_vpc.main.id
+  vpc_id      = var.vpc_id
 
   ingress {
     description = "HTTP"
@@ -31,12 +29,10 @@ resource "aws_security_group" "alb" {
   tags = { Name = "${var.project}-sg-alb" }
 }
 
-# ── Frontend (Nginx container on port 3000) ───────────────────────────────────
-
 resource "aws_security_group" "frontend" {
   name        = "${var.project}-sg-frontend"
   description = "Frontend: accepts traffic from ALB only"
-  vpc_id      = aws_vpc.main.id
+  vpc_id      = var.vpc_id
 
   ingress {
     description     = "From ALB"
@@ -56,12 +52,10 @@ resource "aws_security_group" "frontend" {
   tags = { Name = "${var.project}-sg-frontend" }
 }
 
-# ── Gateway (port 4000) ───────────────────────────────────────────────────────
-
 resource "aws_security_group" "gateway" {
   name        = "${var.project}-sg-gateway"
   description = "API Gateway: accepts traffic from frontend"
-  vpc_id      = aws_vpc.main.id
+  vpc_id      = var.vpc_id
 
   ingress {
     description     = "From frontend"
@@ -81,12 +75,10 @@ resource "aws_security_group" "gateway" {
   tags = { Name = "${var.project}-sg-gateway" }
 }
 
-# ── Auth Service (port 4001) ──────────────────────────────────────────────────
-
 resource "aws_security_group" "auth_service" {
   name        = "${var.project}-sg-auth"
-  description = "Auth service: accepts from gateway"
-  vpc_id      = aws_vpc.main.id
+  description = "Auth service: accepts from gateway and backend services"
+  vpc_id      = var.vpc_id
 
   ingress {
     description     = "From gateway"
@@ -96,7 +88,6 @@ resource "aws_security_group" "auth_service" {
     security_groups = [aws_security_group.gateway.id]
   }
 
-  # Business/review/inquiry services call auth for session validation
   ingress {
     description     = "From backend services"
     from_port       = 4001
@@ -115,12 +106,10 @@ resource "aws_security_group" "auth_service" {
   tags = { Name = "${var.project}-sg-auth" }
 }
 
-# ── Business / Review / Inquiry services (ports 4002–4004) ───────────────────
-
 resource "aws_security_group" "backend_services" {
   name        = "${var.project}-sg-backend-services"
   description = "Backend services: business, review, inquiry"
-  vpc_id      = aws_vpc.main.id
+  vpc_id      = var.vpc_id
 
   ingress {
     description     = "From gateway"
@@ -140,12 +129,10 @@ resource "aws_security_group" "backend_services" {
   tags = { Name = "${var.project}-sg-backend-services" }
 }
 
-# ── Redis (port 6379) ─────────────────────────────────────────────────────────
-
 resource "aws_security_group" "redis" {
   name        = "${var.project}-sg-redis"
   description = "Redis: accepts from auth and backend services"
-  vpc_id      = aws_vpc.main.id
+  vpc_id      = var.vpc_id
 
   ingress {
     description     = "From auth service"
@@ -173,12 +160,10 @@ resource "aws_security_group" "redis" {
   tags = { Name = "${var.project}-sg-redis" }
 }
 
-# ── PostgreSQL (port 5432) ────────────────────────────────────────────────────
-
 resource "aws_security_group" "postgres" {
   name        = "${var.project}-sg-postgres"
   description = "PostgreSQL: accepts from auth and backend services"
-  vpc_id      = aws_vpc.main.id
+  vpc_id      = var.vpc_id
 
   ingress {
     description     = "From auth service"
@@ -206,12 +191,10 @@ resource "aws_security_group" "postgres" {
   tags = { Name = "${var.project}-sg-postgres" }
 }
 
-# ── EKS nodes ─────────────────────────────────────────────────────────────────
-
 resource "aws_security_group" "eks_nodes" {
   name        = "${var.project}-sg-eks-nodes"
   description = "EKS worker nodes"
-  vpc_id      = aws_vpc.main.id
+  vpc_id      = var.vpc_id
 
   ingress {
     description = "Node-to-node traffic"
